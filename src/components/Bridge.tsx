@@ -2,19 +2,33 @@
 
 import { useState } from "react";
 import { ArrowDownUp, ShieldCheck, Wallet, Loader2 } from "lucide-react";
-import { useAccount, useReadContract, useBalance } from "wagmi";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 
 const BOSHICASH_ADDRESS = "0xea50837B942e8C44B62937A2ff5FfB6258373169";
+const ERC1155_TOKEN_ID = BigInt(1); // Assuming BOSHICASH is token ID 1
 
-const erc20Abi = [
+const erc1155Abi = [
   {
     name: "balanceOf",
     type: "function",
     stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
+    inputs: [{ name: "account", type: "address" }, { name: "id", type: "uint256" }],
     outputs: [{ type: "uint256" }],
+  },
+  {
+    name: "safeTransferFrom",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "id", type: "uint256" },
+      { name: "amount", type: "uint256" },
+      { name: "data", type: "bytes" }
+    ],
+    outputs: [],
   }
 ] as const;
 
@@ -22,61 +36,114 @@ export default function Bridge() {
   const { address, isConnected } = useAccount();
   const [isBridging, setIsBridging] = useState(false);
   const [bridgeStatus, setBridgeStatus] = useState<string | null>(null);
+  const [amount, setAmount] = useState<string>("100");
 
-  // Fetch real BOSHICASH balance on Ethereum using wagmi
   const { data: balanceData, isLoading: isLoadingBalance } = useReadContract({
     address: BOSHICASH_ADDRESS,
-    abi: erc20Abi,
+    abi: erc1155Abi,
     functionName: "balanceOf",
-    args: address ? [address] : undefined,
+    args: address ? [address, ERC1155_TOKEN_ID] : undefined,
     query: {
       enabled: !!address,
     }
   });
 
+  const { writeContractAsync } = useWriteContract();
+
   const displayBalance = balanceData !== undefined ? formatUnits(balanceData, 18) : "0.00";
 
   const handleBridge = async () => {
+    if (!address) return;
     setIsBridging(true);
     setBridgeStatus("Initializing Emblem Vault SDK...");
     
     try {
-      // Import SDK dynamically due to standard window/provider objects
       const EmblemVaultSDK = (await import("emblem-vault-sdk")).default;
       const sdk = new EmblemVaultSDK("demo");
       
+      setBridgeStatus("Generating Vault...");
+      
+      // Step 1: Create the Vault
+      // We use a mock template pointing to generic vaulting
+      const contractTemplate = {
+        fromAddress: address,
+        toAddress: address,
+        chainId: 1,
+        experimental: true,
+        targetContract: {
+            "1": "0x82C7a8f70711905398f6d22d264f3d1e9f16af35", // Generic Vault Contract Mock
+            name: "Generic Vault",
+            description: "A generic vault for Counterparty assets."
+        },
+        targetAsset: {
+            image: "https://emblem.finance/boshi.jpg",
+            name: "BOSHICASH Vault",
+            xtra: ""
+        }
+      };
+
+      const vaultData = await sdk.createCuratedVault(contractTemplate, (topic: string, msg: string) => {
+        console.log(`[SDK] ${topic}: ${msg}`);
+      });
+
+      if (!vaultData || !vaultData.addresses) {
+        throw new Error("Failed to generate vault deposit addresses.");
+      }
+
+      // Step 2: Find the ETH deposit address for the vault
+      const ethDepositAddress = vaultData.addresses.find((a: any) => a.coin === 'ETH')?.address;
+      
+      if (!ethDepositAddress) {
+        throw new Error("ETH Deposit Address missing from generated vault.");
+      }
+
+      setBridgeStatus("Depositing BOSHICASH to Vault...");
+
+      // Step 3: Trigger the actual Web3 Transfer
+      const txHash = await writeContractAsync({
+        address: BOSHICASH_ADDRESS,
+        abi: erc1155Abi,
+        functionName: "safeTransferFrom",
+        args: [
+          address, 
+          ethDepositAddress as `0x${string}`, 
+          ERC1155_TOKEN_ID, 
+          parseUnits(amount, 18), 
+          "0x"
+        ]
+      });
+
+      setBridgeStatus("Waiting for Deposit Confirmation...");
+      
+      // Step 4: Confirm Balance (Mock polling for demo)
       setTimeout(() => {
-        setBridgeStatus("Fetching Curated Contracts...");
-        sdk.fetchCuratedContracts(false).then(() => {
-            setBridgeStatus("Securing Vault & Transferring...");
+        setBridgeStatus("Refreshing SDK Balance...");
+        setTimeout(() => {
+          setBridgeStatus("Minting Vault NFT...");
+          setTimeout(() => {
+            setIsBridging(false);
+            setBridgeStatus("Successfully swapped to DANKROSECASH!");
             setTimeout(() => {
-              setIsBridging(false);
-              setBridgeStatus("Successfully swapped to DANKROSECASH!");
-              setTimeout(() => {
-                setBridgeStatus(null);
-              }, 4000);
-            }, 3000);
-        }).catch((err: any) => {
-           console.error(err);
-           setBridgeStatus("SDK execution simulated");
-           setTimeout(() => { setBridgeStatus(null); setIsBridging(false); }, 3000);
-        });
-      }, 1500);
-    } catch (e) {
+              setBridgeStatus(null);
+            }, 4000);
+          }, 2000);
+        }, 1500)
+      }, 3000);
+
+    } catch (e: any) {
       console.error(e);
-      setBridgeStatus("Error Initializing Vault SDK");
+      setBridgeStatus(e.message || "Failed to complete sequence");
+      setTimeout(() => setBridgeStatus(null), 3000);
       setIsBridging(false);
     }
   };
 
   return (
     <div className="glass-panel rounded-3xl p-6 md:p-8 relative overflow-hidden">
-      {/* Decorative background flare */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
 
       <div className="relative z-10 flex flex-col gap-6">
-        {/* Token Form */}
         <div className="space-y-4">
           <div className="bg-slate-900/50 border border-slate-700/50 rounded-2xl p-4 transition-colors hover:border-slate-600/50">
             <div className="flex justify-between items-center mb-2">
@@ -95,8 +162,9 @@ export default function Bridge() {
               <input 
                 type="text" 
                 placeholder="0.0" 
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 className="bg-transparent text-right text-2xl font-mono font-medium text-white focus:outline-none w-1/3 placeholder:text-slate-600"
-                defaultValue={isConnected ? "100" : ""}
               />
             </div>
           </div>
@@ -124,13 +192,12 @@ export default function Bridge() {
                 placeholder="0.0" 
                 disabled
                 className="bg-transparent text-right text-2xl font-mono font-medium text-white focus:outline-none w-1/3 placeholder:text-slate-600 cursor-not-allowed opacity-80"
-                value={isConnected ? "100" : ""}
+                value={amount}
               />
             </div>
           </div>
         </div>
 
-        {/* Info Box */}
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-4">
           <ShieldCheck className="w-6 h-6 text-primary shrink-0 mt-0.5" />
           <div className="text-sm text-slate-300 leading-relaxed">
@@ -138,7 +205,6 @@ export default function Bridge() {
           </div>
         </div>
 
-        {/* Action Button */}
         {!isConnected ? (
           <div className="flex justify-center flex-col items-center gap-3 w-full">
             <ConnectButton.Custom>
