@@ -9,9 +9,19 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emblemvault/auth-sdk": "^2.3.18",
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@tanstack/react-query": "^5.90.21",
+    "clsx": "^2.1.1",
+    "emblem-vault-sdk": "^2.10.0",
+    "framer-motion": "^12.34.3",
+    "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "tailwind-merge": "^3.5.0",
+    "viem": "^2.46.3",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

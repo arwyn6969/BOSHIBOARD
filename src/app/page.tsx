@@ -1,64 +1,75 @@
-import Image from "next/image";
+import TokenGallery from "@/components/TokenGallery";
+import Bridge from "@/components/Bridge";
+import { Rocket } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass-panel border-b-0 border-b-transparent">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+                <Rocket className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-2xl tracking-tighter bg-clip-text text-transparent bg-linear-to-r from-primary to-accent">
+                BOSHI BOARD
+              </span>
+            </div>
+            <div className="hidden md:flex space-x-8">
+              <a href="#gallery" className="text-slate-300 hover:text-white transition-colors duration-200 text-sm font-medium tracking-wide uppercase">Gallery</a>
+              <a href="#bridge" className="text-slate-300 hover:text-white transition-colors duration-200 text-sm font-medium tracking-wide uppercase">Bridge</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-24">
+        
+        {/* Hero Section */}
+        <section className="text-center space-y-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
+            Cross-Chain Counterparty Bridge Live
+          </div>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            The Future of <span className="text-transparent bg-clip-text bg-linear-to-r from-primary via-fuchsia-500 to-accent">BOSHI</span> Tokens
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+            Explore the gallery of MIKA & BOSHI assets, track real-time DEX liquidity, and seamlessly bridge your Ethereum BOSHICASH to Counterparty.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </section>
+
+        {/* Gallery Section */}
+        <section id="gallery" className="scroll-mt-24">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+                Token Gallery
+              </h2>
+              <p className="text-slate-400">
+                Real-time data for BOSHI & MIKA assets on Counterparty.
+              </p>
+            </div>
+          </div>
+          <TokenGallery />
+        </section>
+
+        {/* Bridge Section */}
+        <section id="bridge" className="scroll-mt-24 max-w-xl mx-auto">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+              Cross-Chain Bridge
+            </h2>
+            <p className="text-slate-400">
+              Wrap and swap BOSHICASH (Ethereum) to DANKROSECASH (Bitcoin) via Emblem Vault.
+            </p>
+          </div>
+          <Bridge />
+        </section>
+
       </main>
     </div>
   );
